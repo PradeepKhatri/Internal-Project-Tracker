@@ -12,7 +12,8 @@ const ProjectSchema = new mongoose.Schema(
         department : {
             type: String,
             required: true,
-            trim : true
+            trim : true,
+            unique: false,
         },
         milestone : {
             start: {

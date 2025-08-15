@@ -6,17 +6,19 @@ import {
   DeleteProject,
   UpdateProject,
 } from "../controllers/project.controller.js";
+import { authenticate } from "../middlewares/user.middleware.js";
+import { adminMiddleware, superadminMiddleware } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
-router.get("/projects", GetProjects);
+router.get("/projects", authenticate,  GetProjects);
 
-router.post("/create-project", CreateProject);
+router.post("/create-project", authenticate, superadminMiddleware, CreateProject);
 
-router.get("/projects/:id", GetProjectById);
+router.get("/projects/:id", authenticate, GetProjectById);
 
-router.delete("/projects/:id", DeleteProject);
+router.delete("/projects/:id", authenticate, superadminMiddleware, DeleteProject);
 
-router.patch("/projects/:id", UpdateProject);
+router.patch("/projects/:id", authenticate, adminMiddleware, UpdateProject);
 
 export default router;
