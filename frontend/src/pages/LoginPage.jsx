@@ -10,7 +10,7 @@ import {
   Typography,
   Container,
 } from "@mui/material";
-import { loginUser } from "../api/auth.service";
+import { getMyProfile, loginUser } from "../api/auth.service";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ColourButton from "../components/ColourButton";
@@ -22,9 +22,11 @@ const LoginPage = () => {
   const auth = useAuth();
   const navigate = useNavigate();
 
+
+
   useEffect(() => {
     if (auth.user) {
-      navigate("/homepage", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [auth.user, navigate]);
 
@@ -33,20 +35,28 @@ const LoginPage = () => {
 
     try {
       const data = await loginUser(email, password);
-      auth.login(data.user, data.token);
+      const userData = await getMyProfile(data.token);
+      auth.login(userData, data.token);
 
-      navigate("/homepage");
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     }
   };
 
   return (
+    // <div
+    //   className="bg-cover bg-center min-h-screen flex items-center justify-center"
+    //   style={{
+    //     backgroundImage:
+    //       "url('https://res.cloudinary.com/dh2vwyyqj/image/upload/v1754840220/Digihomes-Banner_f5zyso.png')",
+    //   }}
+    // >
     <div
-      className="bg-cover bg-center min-h-screen flex items-center justify-center"
+      className="bg-cover bg-top bg-fixed min-h-screen flex items-center justify-center"
       style={{
         backgroundImage:
-          "url('https://res.cloudinary.com/dh2vwyyqj/image/upload/v1754840220/Digihomes-Banner_f5zyso.png')",
+          "url('https://cdn.properties.emaar.com/wp-content/uploads/2023/09/MicrosoftTeams-image-70-e1694072306832.jpg')",
       }}
     >
       <Container

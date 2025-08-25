@@ -3,7 +3,7 @@ import axios from "axios";
 const GET_USERS_API = "http://localhost:5000/api/auth/users";
 const UPDATE_USER_API = "http://localhost:5000/api/auth";
 const CREATE_USER = "http://localhost:5000/api/auth/create-user";
-const DELETE_USER_API = "http://localhost:5000/api/auth"; // Assuming RESTful: /api/auth/:id
+const DELETE_USER_API = "http://localhost:5000/api/auth/users"; 
 
 const getUsers = async (token) => {
   try {

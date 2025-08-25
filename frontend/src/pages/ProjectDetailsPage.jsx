@@ -36,7 +36,7 @@ const ProjectDetailsPage = () => {
   const navigate = useNavigate();
 
   const { id } = useParams();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const [project, setProject] = useState(null);
 
   const { showSnackbar } = useSnackbar();
@@ -68,10 +68,28 @@ const ProjectDetailsPage = () => {
 
   const [deleteDialogueOpen, setDeleteDialogueOpen] = useState(false);
 
-  const handleEditOpen = () => setEditFormOpen(true);
+  const handleEditOpen = () => {
+    if (!user || user.role === "viewer") {
+      showSnackbar(
+        "You do not have permission to perform this action.",
+        "error"
+      );
+      return;
+    }
+    setEditFormOpen(true);
+  };
   const handleEditClose = () => setEditFormOpen(false);
 
-  const handleDeleteDialogueOpen = () => setDeleteDialogueOpen(true);
+  const handleDeleteDialogueOpen = () => {
+    if (!user || user.role !== "superadmin") {
+      showSnackbar(
+        "You do not have permission to perform this action.",
+        "error"
+      );
+      return;
+    }
+    setDeleteDialogueOpen(true);
+  };
   const handleDeleteDialogueClose = () => setDeleteDialogueOpen(false);
 
   const handleEditCloseAndRefresh = async () => {
@@ -87,16 +105,12 @@ const ProjectDetailsPage = () => {
     }
   };
 
-  const Transition = React.forwardRef((props, ref) => (
-    <Slide direction="up" ref={ref} {...props} />
-  ));
-
   const handleDeleteProject = async () => {
     setLoading(true);
     try {
       await deleteProject(id, token);
       setLoading(false);
-      navigate("/homepage");
+      navigate("/projects");
       showSnackbar("Project deleted", "success");
     } catch (error) {
       setLoading(false);
@@ -167,7 +181,7 @@ const ProjectDetailsPage = () => {
                 <StepLabel
                   StepIconProps={{
                     sx: {
-                      "&.Mui-active": { color: "primary.main" },
+                      "&.Mui-active": { color: "success .main" },
                       "&.Mui-completed": { color: "success.main" },
                     },
                   }}
@@ -332,7 +346,6 @@ const ProjectDetailsPage = () => {
 
       <Dialog
         open={deleteDialogueOpen}
-        TransitionComponent={Transition}
         keepMounted
         onClose={handleDeleteDialogueClose}
       >

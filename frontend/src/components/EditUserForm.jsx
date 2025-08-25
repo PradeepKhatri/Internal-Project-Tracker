@@ -38,7 +38,7 @@ const EditUserForm = ({ open, onClose, user }) => {
         user._id
       );
 
-      showSnackbar("User Role Updated! Refresh to load changes", "success");
+      showSnackbar("User Role Updated!", "success");
       onClose();
     } catch (error) {
       showSnackbar(error.message, "error");

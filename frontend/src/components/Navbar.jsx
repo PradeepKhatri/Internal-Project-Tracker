@@ -80,7 +80,7 @@ const Navbar = () => {
           {user && (
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                Hi, {user.name}
+                Hi, {user.name?.split(" ")[0]}
               </Typography>
               <IconButton
                 size="large"
@@ -102,6 +102,8 @@ const Navbar = () => {
                 onClose={handleClose}
               >
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                <MenuItem onClick={handleClose}>Change Password</MenuItem>
+
                 <MenuItem onClick={handleClose}>My account</MenuItem>
               </Menu>
             </Box>

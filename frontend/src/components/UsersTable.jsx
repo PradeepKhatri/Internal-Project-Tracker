@@ -36,8 +36,8 @@ import { useSnackbar } from "../context/SnackbarContext";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ColourButton from "./ColourButton";
 
-const UsersTable = ({ users }) => {
-  const { token } = useAuth();
+const UsersTable = ({ users, onSuccess }) => {
+  const { user:loggedInUser, token } = useAuth();
   const { showSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -50,26 +50,41 @@ const UsersTable = ({ users }) => {
   const closeForm = async () => {
     setEditUserForm(false);
     setSingleUserData(null);
+    onSuccess();
   };
 
-  // State to track which user is being deleted
   const [deleteDialogueOpen, setDeleteDialogueOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
   const handleDeleteDialogueOpen = (user) => {
+    if (!loggedInUser || loggedInUser.role !== "superadmin") {
+      showSnackbar(
+        "You do not have permission to perform this action.",
+        "error"
+      );
+      return;
+    }
     setUserToDelete(user);
     setDeleteDialogueOpen(true);
   };
   const handleDeleteDialogueClose = () => {
     setDeleteDialogueOpen(false);
     setUserToDelete(null);
+    onSuccess();
   };
 
-  const Transition = React.forwardRef((props, ref) => (
-    <Slide direction="up" ref={ref} {...props} />
-  ));
+  
 
   const handleEditButtonClick = async (id, token) => {
+
+    if (!loggedInUser || loggedInUser.role !== "superadmin") {
+      showSnackbar(
+        "You do not have permission to perform this action.",
+        "error"
+      );
+      return;
+    }
+
     try {
       setLoading(true);
       setSingleUserData(null);
@@ -89,23 +104,16 @@ const UsersTable = ({ users }) => {
     if (!userToDelete) return;
     setLoading(true);
     try {
-      // The backend expects :userId, not just /:id, so use /users/:userId
-      // But our deleteUser in user.service.jsx uses DELETE_USER_API = "http://localhost:5000/api/auth"
-      // and calls `${DELETE_USER_API}/${id}`. The backend route is DELETE /:userId (see backend/src/routes/user.routes.js)
-      // So the API call is correct, but let's check if the id is correct and if the backend expects _id or id.
-      // The backend expects req.params.userId, so _id is correct.
-
       const response = await deleteUser(userToDelete._id, token);
 
-      // Optionally, you may want to check the response for success
       if (response?.message === "User deleted successfully.") {
         showSnackbar("User Removed", "success");
       } else {
         showSnackbar(response?.message || "Failed to remove user.", "error");
       }
-
       setDeleteDialogueOpen(false);
       setUserToDelete(null);
+      onSuccess();
     } catch (error) {
       showSnackbar(error?.message || "Failed to remove user.", "error");
     } finally {
@@ -128,9 +136,12 @@ const UsersTable = ({ users }) => {
       <TableContainer
         component={Paper}
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
           overflow: "hidden",
+          backgroundColor: "rgba(355, 355, 355, 0.60)",
+            backdropFilter: "blur(70px)",
+          
         }}
       >
         <Table>
@@ -151,7 +162,7 @@ const UsersTable = ({ users }) => {
               <TableRow
                 key={user._id}
                 sx={{
-                  backgroundColor: index % 2 === 0 ? "#fff" : "#fafafa",
+                  // backgroundColor: index % 2 === 0 ? "#fff" : "#fafafa",
                   transition: "background-color 0.2s ease",
                   "&:hover": { backgroundColor: "#f0f0f0" },
                   "&:last-child td, &:last-child th": { border: 0 },
@@ -213,7 +224,6 @@ const UsersTable = ({ users }) => {
 
       <Dialog
         open={deleteDialogueOpen}
-        TransitionComponent={Transition}
         keepMounted
         onClose={handleDeleteDialogueClose}
       >

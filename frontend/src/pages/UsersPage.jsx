@@ -9,8 +9,10 @@ import { useSnackbar } from "../context/SnackbarContext";
 import UsersTable from "../components/UsersTable";
 import AddUserForm from "../components/AddUserForm";
 
+import HomeIcon from "@mui/icons-material/Home";
+
 const UsersPage = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const { showSnackbar } = useSnackbar();
 
   const navigate = useNavigate();
@@ -20,7 +22,16 @@ const UsersPage = () => {
 
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
 
-  const openAddUserForm = () => setIsAddUserFormOpen(true);
+  const openAddUserForm = () => {
+    if (!user || user.role !== "superadmin") {
+      showSnackbar(
+        "You do not have permission to perform this action.",
+        "error"
+      );
+      return;
+    }
+    setIsAddUserFormOpen(true);
+  };
   const closeAddUserForm = () => {
     setIsAddUserFormOpen(false);
   };
@@ -48,9 +59,29 @@ const UsersPage = () => {
   }, [fetchUsers]);
 
   return (
-    <div className="p-8 flex flex-col gap-10">
+    // <div className="p-8 flex flex-col gap-10">
+    <div
+      className="bg-cover bg-top bg-fixed min-h-screen flex flex-col p-8 gap-10"
+      style={{
+        backgroundImage:
+          "url('https://cdn.properties.emaar.com/wp-content/uploads/2023/09/MicrosoftTeams-image-70-e1694072306832.jpg')",
+      }}
+    >
       <div className="text-3xl font-medium flex justify-between px-20">
-        <p> Users List </p>
+        <div className="flex items-center gap-3">
+          <ColourButton
+            startIcon={<HomeIcon />}
+            onClick={() => (window.location.href = "/dashboard")}
+            sx={{
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              paddingLeft: 3.5,
+            }}
+            aria-label="Go to Home"
+          />
+          <span className="text-3xl font-semibold text-gray-800">Users List</span>
+        </div>
         <ColourButton startIcon={<AddIcon />} onClick={openAddUserForm}>
           Add User
         </ColourButton>
@@ -63,7 +94,7 @@ const UsersPage = () => {
         )}
       </div>
 
-      <UsersTable users={users} />
+      <UsersTable users={users} onSuccess={fetchUsers} />
     </div>
   );
 };

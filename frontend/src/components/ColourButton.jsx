@@ -4,6 +4,7 @@ import { styled } from "@mui/material/styles";
 
 const ColouredButton = styled(Button)(({ theme }) => ({
   color: theme.palette.getContrastText(theme.palette.grey[900]),
+  alignItems: "center",
   background: `linear-gradient(
     to bottom,
     ${theme.palette.grey[800]} 0%,

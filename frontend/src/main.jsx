@@ -9,7 +9,7 @@ import { SnackbarProvider } from "./context/SnackbarContext.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <SnackbarProvider>
+      <SnackbarProvider maxSnack={3}>
         <AuthProvider>
           <App />
         </AuthProvider>

@@ -82,7 +82,8 @@ const MenuDrawer = ({ open, onClose }) => {
         <Divider sx={{ my: 1 }} />
 
         <List>
-          {drawerItem("Projects", <InboxIcon />, "/homepage")}
+          {drawerItem("Dashboard", <MailIcon />, "/dashboard")}
+          {drawerItem("Projects", <InboxIcon />, "/projects")}
           {drawerItem("Users", <MailIcon />, "/users")}
         </List>
 

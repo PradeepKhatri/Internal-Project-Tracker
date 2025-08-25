@@ -1,13 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import HomePage from "./pages/HomePage";
+import ProjectsPage from "./pages/ProjectsPage";
 import Navbar from "./components/Navbar";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import UsersPage from "./pages/UsersPage";
+import DashboardPage from "./pages/DashboardPage";
+import DeadLinesPage from "./pages/DeadLinespage";
 
 const App = () => {
-
   const location = useLocation();
 
   return (
@@ -18,18 +25,18 @@ const App = () => {
 
         <Route path="/login" element={<LoginPage />} />
         <Route
-          path="/homepage"
+          path="/dashboard"
           element={
             <ProtectedRoute>
-              <HomePage />
+              <DashboardPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/project-details/:id"
+          path="/projects"
           element={
             <ProtectedRoute>
-              <ProjectDetailsPage />
+              <ProjectsPage />
             </ProtectedRoute>
           }
         />
@@ -41,6 +48,23 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/deadlines"
+          element={
+            <ProtectedRoute>
+              <DeadLinesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/project-details/:id"
+          element={
+            <ProtectedRoute>
+              <ProjectDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
     </>
   );

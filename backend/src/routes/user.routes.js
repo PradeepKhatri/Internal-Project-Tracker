@@ -28,6 +28,6 @@ router.get('/users/:userId', authenticate, GetUserById);
 
 router.get('/me', authenticate, GetMyProfile);
 
-router.delete('/:userId', authenticate, superadminMiddleware, DeleteUser);
+router.delete('/users/:id', authenticate, superadminMiddleware, DeleteUser);
 
 export default router;
