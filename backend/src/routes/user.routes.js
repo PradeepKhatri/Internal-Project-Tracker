@@ -31,3 +31,4 @@ router.get('/me', authenticate, GetMyProfile);
 router.delete('/users/:id', authenticate, superadminMiddleware, DeleteUser);
 
 export default router;
+

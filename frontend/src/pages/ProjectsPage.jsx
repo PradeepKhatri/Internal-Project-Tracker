@@ -56,14 +56,14 @@ const ProjectsPage = () => {
 
   return (
     <div
-      className="bg-cover bg-top bg-fixed min-h-screen flex flex-col p-8 gap-10"
+      className="bg-cover bg-top bg-fixed min-h-screen flex flex-col gap-10 px-3 sm:px-6 md:px-10 lg:px-20 py-6 sm:py-8 md:py-10"
       style={{
         backgroundImage:
           "url('https://cdn.properties.emaar.com/wp-content/uploads/2023/09/MicrosoftTeams-image-70-e1694072306832.jpg')",
       }}
     >
       {/* <div className="p-8 flex flex-col gap-10"> */}
-      <div className="text-3xl font-medium flex justify-between px-20">
+      <div className="text-3xl font-medium flex lg:justify-between xl:justify-between sm:justify-around">
         <div className="flex items-center gap-3">
           <ColourButton
             startIcon={<HomeIcon />}

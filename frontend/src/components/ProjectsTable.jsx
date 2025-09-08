@@ -165,7 +165,7 @@ const ProjectsTable = ({ projects, stage }) => {
           boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
           overflow: "hidden",
           backgroundColor: "rgba(355, 355, 355, 0.60)",
-            backdropFilter: "blur(70px)",
+          backdropFilter: "blur(70px)",
         }}
       >
         <Table>
@@ -183,7 +183,13 @@ const ProjectsTable = ({ projects, stage }) => {
               <StyledTableCell sx={{ fontWeight: "bold", fontSize: 17 }}>
                 Status
               </StyledTableCell>
-              <StyledTableCell sx={{ fontWeight: "bold", fontSize: 17 }}>
+              <StyledTableCell
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: 17,
+                  display: { xs: "none",  md: "none", lg: "table-cell" },
+                }}
+              >
                 Partner
               </StyledTableCell>
               <StyledTableCell />
@@ -196,7 +202,7 @@ const ProjectsTable = ({ projects, stage }) => {
                 key={project._id}
                 sx={{
                   // backgroundColor: index % 2 === 0 ? "#fff" : "#fafafa",
-                  
+
                   transition: "background-color 0.2s ease",
                   "&:hover": { backgroundColor: "#f0f0f0" },
                   "&:last-child td, &:last-child th": { border: 0 },
@@ -249,7 +255,11 @@ const ProjectsTable = ({ projects, stage }) => {
                 <TableCell
                   component="th"
                   scope="row"
-                  sx={{ py: 1.5, fontSize: 15 }}
+                  sx={{
+                    py: 1.5,
+                    fontSize: 15,
+                    display: { xs: "none", md: "none", lg: "table-cell" },
+                  }}
                 >
                   {project.projectPartner}
                 </TableCell>

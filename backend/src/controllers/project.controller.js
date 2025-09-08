@@ -1,12 +1,13 @@
 import Project from "../models/Project.model.js";
 import mongoose from "mongoose";
+import multer from "multer";
 
+// GET all projects
 const GetProjects = async (req, res) => {
   try {
-    const projects = await Project.find({}).populate('projectManager');
-
+    const projects = await Project.find({}).populate("projectManager");
     if (!projects || projects.length === 0) {
-      res.status(200).json({ message: "No projects to display" });
+      return res.status(200).json({ message: "No projects to display" });
     }
     res.status(200).json(projects);
   } catch (error) {
@@ -15,6 +16,7 @@ const GetProjects = async (req, res) => {
   }
 };
 
+// CREATE project (with file upload support)
 const CreateProject = async (req, res) => {
   try {
     const {
@@ -27,7 +29,7 @@ const CreateProject = async (req, res) => {
     } = req.body;
 
     if (!projectName || !department || !milestone || !projectManager) {
-      res.status(400).send({ message: "Missing Required Fields!" });
+      return res.status(400).send({ message: "Missing Required Fields!" });
     }
 
     const existingProject = await Project.findOne({ projectName });
@@ -36,6 +38,7 @@ const CreateProject = async (req, res) => {
         .status(409)
         .json({ message: "A project with this name already exists." });
     }
+
 
     const newProject = new Project({
       projectName,
@@ -105,6 +108,7 @@ const DeleteProject = async (req, res) => {
       return res.status(400).json({ message: "Project ID is required." });
     }
 
+
     const deleteProject = await Project.findByIdAndDelete(id);
 
     if (!deleteProject) {
@@ -131,7 +135,7 @@ const UpdateProject = async (req, res) => {
 
     const updatedProject = await Project.findByIdAndUpdate(id, updates, {
       new: true,
-      runValidators: true
+      runValidators: true,
     });
 
     if (!updatedProject) {
@@ -147,10 +151,11 @@ const UpdateProject = async (req, res) => {
   }
 };
 
+// Export the upload middleware for use in your routes
 export {
   GetProjects,
   CreateProject,
   DeleteProject,
   GetProjectById,
-  UpdateProject,
+  UpdateProject, 
 };

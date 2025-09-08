@@ -2,43 +2,44 @@ import React from "react";
 import {
   Box,
   Button,
-  Container,
   Typography,
-  Divider,
   Backdrop,
   CircularProgress,
   Grid,
   Paper,
   Dialog,
   DialogTitle,
-  DialogContent,
   DialogActions,
-  IconButton,
+  Link,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton, 
+  IconButton
 } from "@mui/material";
 import ColourButton from "../components/ColourButton";
-import Slide from "@mui/material/Slide";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { deleteProject, getProjectById } from "../api/project.service";
+import { deleteFile, deleteProject, downloadFile, getFileUrl, getProjectById } from "../api/project.service";
 import { useAuth } from "../context/AuthContext";
 import EditIcon from "@mui/icons-material/Edit";
-import AddProjectForm from "../components/AddProjectForm";
 import EditProjectForm from "../components/EditProjectForm";
 import { useSnackbar } from "../context/SnackbarContext";
 import DeleteIcon from "@mui/icons-material/Delete";
+import UploadFilesButton from "../components/UploadFilesButton";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 
 const ProjectDetailsPage = () => {
   const navigate = useNavigate();
-
   const { id } = useParams();
   const { user, token } = useAuth();
   const [project, setProject] = useState(null);
-
   const { showSnackbar } = useSnackbar();
 
   const steps = [
@@ -63,10 +64,11 @@ const ProjectDetailsPage = () => {
   };
 
   const [loading, setLoading] = useState(true);
-
   const [editFormOpen, setEditFormOpen] = useState(false);
-
   const [deleteDialogueOpen, setDeleteDialogueOpen] = useState(false);
+
+  const [fileStates, setFileStates] = useState({});
+
 
   const handleEditOpen = () => {
     if (!user || user.role === "viewer") {
@@ -118,6 +120,62 @@ const ProjectDetailsPage = () => {
     }
   };
 
+  const handleFileClick = async (file) => {
+    setFileStates(prev => ({ ...prev, [file._id]: { loading: true, error: false } }));
+
+    try {
+      // 1. Fetch the file data as a blob using our authenticated service
+      const fileBlob = await downloadFile(project._id, file._id, token);
+      
+      // 2. Create a temporary URL from the blob data
+      const fileURL = URL.createObjectURL(fileBlob);
+
+      // 3. Open the temporary URL in a new tab
+      window.open(fileURL, '_blank');
+      
+      // Reset state for this file
+      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: false } }));
+
+      
+
+    } catch (error) {
+      console.error(error);
+      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: true } }));
+
+    }
+  };
+
+  const handleDeleteFile = async (file) => {
+    setFileStates(prev => ({ ...prev, [file._id]: { loading: true, error: false } }));
+    try {
+      await deleteFile(project._id, file._id, token);
+      // Remove the deleted file from the project state
+      setProject(prev => ({
+        ...prev,
+        files: prev.files.filter(f => f._id !== file._id)
+      }));
+      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: false } }));
+      showSnackbar("File deleted", "success");
+
+      
+    } catch (error) {
+      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: true } }));
+      showSnackbar(error?.message || "Failed to delete file.", "error");
+    }
+  };
+
+  // Add this function to refresh the project (and thus the files) after upload
+  const handleUploadSuccess = async () => {
+    try {
+      const receivedData = await getProjectById(id, token);
+      setProject(receivedData.project);
+    } catch (error) {
+      console.error("Failed to refresh project after upload", error);
+    }
+  };
+
+
+
   useEffect(() => {
     const fetchProject = async () => {
       try {
@@ -154,183 +212,400 @@ const ProjectDetailsPage = () => {
         "__v",
         "milestone",
         "projectName",
+        "files",
       ].includes(key)
   );
 
   const milestones = Object.entries(project.milestone || {});
 
+
   return (
-    <>
-      <div className="px-10 pt-5 flex flex-col gap-10 ">
-        <ColourButton
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
-          sx={{ width: "fit-content" }}
+    <div
+      className="bg-cover bg-top bg-fixed min-h-screen flex flex-col"
+      style={{
+        backgroundImage:
+          "url('https://cdn.properties.emaar.com/wp-content/uploads/2023/09/MicrosoftTeams-image-70-e1694072306832.jpg')",
+      }}
+    >
+      <div
+        className="flex flex-col"
+        style={{
+          padding: "40px 0",
+          minHeight: "100vh",
+          width: "100%",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        }}
+      >
+        <Box
+          sx={{
+            px: { xs: 2, md: 10 },
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
-          Back
-        </ColourButton>
-
-        {project && (
-          <Stepper
-            activeStep={Math.max(0, steps.indexOf(project.currentStage || ""))}
-            alternativeLabel
-            sx={{ py: 2 }}
+          <ColourButton
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBack}
+            sx={{
+              width: "fit-content",
+              background: "rgba(33,33,33,0.85)",
+              color: "#fff",
+              fontWeight: 600,
+              borderRadius: 2,
+              boxShadow: 2,
+              mb: 2,
+              "&:hover": {
+                background: "#333",
+                color: "#fff",
+              },
+            }}
           >
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel
-                  StepIconProps={{
-                    sx: {
-                      "&.Mui-active": { color: "success .main" },
-                      "&.Mui-completed": { color: "success.main" },
-                    },
-                  }}
-                >
-                  {label}
-                </StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        )}
-
-        <Box sx={{ paddingX: 10, paddingTop: 6 }}>
-          {/* Project Name */}
-          <Typography component="h1" variant="h3">
-            {project.projectName}
-          </Typography>
-
-          {/* General Details */}
-          <Grid container spacing={2} sx={{ py: 5 }}>
-            {filteredDetails.map(([key, value]) => (
-              <Grid
-                size={6}
-                key={key}
-                sx={{
-                  display: "flex",
-                }}
-              >
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    bgcolor: "#f9fafb",
-                    borderRadius: 2,
-                    width: "80%",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      bgcolor: "grey.100",
-                    },
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: "bold", color: "text.secondary" }}
-                  >
-                    {fieldLabels[key] || key}
-                  </Typography>
-                  <Typography variant="body1">
-                    {typeof value === "object" && value !== null
-                      ? value?.name || JSON.stringify(value)
-                      : String(value)}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Milestones */}
-          <Typography variant="h4" gutterBottom sx={{ pt: 5, pb: 2 }}>
-            Milestones:
-          </Typography>
-
-          {milestones.map(([key, data]) => (
-            <Box key={key} sx={{ mb: 2 }}>
-              {/* Milestone Label */}
-              <Typography
-                variant="h6"
-                sx={{
-                  textTransform: "capitalize",
-                  mb: 1,
-                  fontWeight: "bold",
-                }}
-              >
-                {key}:
-              </Typography>
-
-              {/* Dates Row */}
-              <Grid sx={{ display: "flex", gap: 2 }}>
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    bgcolor: "#f9fafb",
-                    borderRadius: 2,
-                    width: "20%",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: "bold", color: "text.secondary" }}
-                  >
-                    Planned
-                  </Typography>
-                  <Typography variant="body1">
-                    {data.planned
-                      ? new Date(data.planned).toLocaleDateString()
-                      : "-"}
-                  </Typography>
-                </Paper>
-
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    bgcolor: "#f9fafb",
-                    borderRadius: 2,
-                    width: "20%",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: "bold", color: "text.secondary" }}
-                  >
-                    Actual
-                  </Typography>
-                  <Typography variant="body1">
-                    {data.actual
-                      ? new Date(data.actual).toLocaleDateString()
-                      : "-"}
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Box>
-          ))}
+            Back
+          </ColourButton>
 
           <Box
             sx={{
-              alignSelf: "center",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 4,
-              py: 7,
+              px: { xs: 0, md: 10 },
+              pt: 6,
+              backgroundColor: "rgba(355, 355, 355, 0.50)",
+              backdropFilter: "blur(50px)",
+              borderRadius: 3,
+              boxShadow: 2,
+              mb: 4,
+              transition: "background 0.2s",
             }}
           >
-            <ColourButton startIcon={<EditIcon />} onClick={handleEditOpen}>
-              Edit
-            </ColourButton>
-            <Button
-              variant="outlined"
-              color="error"
+            {project && (
+              <Stepper
+                activeStep={Math.max(
+                  0,
+                  steps.indexOf(project.currentStage || "")
+                )}
+                alternativeLabel
+                sx={{
+                  pt: 5,
+                  pb: 3,
+                  mb: 2,
+                }}
+              >
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel
+                      StepIconProps={{
+                        sx: {
+                          "&.Mui-active": { color: "#388E3C" },
+                          "&.Mui-completed": { color: "#388E3C" },
+                        },
+                      }}
+                    >
+                      {label}
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            )}
+
+            {/* Project Name */}
+            <Typography
+              component="h1"
+              variant="h3"
               sx={{
-                borderWidth: 2,
-                "&:hover": { backgroundColor: "error.main", color: "white" },
+                fontWeight: 700,
+                color: "#212121",
+                mb: 2,
+                letterSpacing: 0.5,
+                textShadow: "0 2px 8px rgba(0,0,0,0.04)",
               }}
-              startIcon={<DeleteIcon />}
-              onClick={handleDeleteDialogueOpen}
             >
-              Delete
-            </Button>
+              {project.projectName}
+            </Typography>
+
+            {/* General Details */}
+            <Grid
+              container
+              spacing={2}
+              sx={{
+                py: 5,
+                px: { xs: 0, md: 0 },
+              }}
+            >
+              {filteredDetails.map(([key, value]) => (
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  size={6}
+                  key={key}
+                  sx={{
+                    display: "flex",
+                  }}
+                >
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      bgcolor: "rgba(255,255,255,0.85)",
+                      borderRadius: 2,
+                      width: "100%",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                      border: "1.5px solid #e0e0e0",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        bgcolor: "rgba(245,245,245,0.95)",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                        borderColor: "#bdbdbd",
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "text.secondary",
+                        letterSpacing: 0.5,
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {fieldLabels[key] || key}
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "#212121",
+                        fontWeight: 500,
+                        mt: 0.5,
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {typeof value === "object" && value !== null
+                        ? value?.name || JSON.stringify(value)
+                        : String(value)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+
+            {/* Uploaded Files */}
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{
+                pt: 2,
+                pb: 1,
+                fontWeight: 700,
+                color: "#212121",
+                letterSpacing: 0.5,
+                textShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            >
+              Uploaded Files:
+            </Typography>
+
+              {project.files && project.files.length > 0 ? (
+            <List sx={{ bgcolor: 'background.paper', borderRadius: '8px', mt: 2 }}>
+              {project.files.map((file) => (
+                <ListItem key={file._id} 
+                  secondaryAction={
+                    <IconButton 
+                      edge="end" 
+                      aria-label="delete" 
+                      onClick={() => handleDeleteFile(file)} 
+                      disabled={fileStates[file._id]?.loading}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                  disablePadding
+                >
+                  <ListItemButton onClick={() => handleFileClick(file)} disabled={fileStates[file._id]?.loading}>
+                    <ListItemIcon>
+                      {fileStates[file._id]?.loading ? <CircularProgress size={24} /> : <PictureAsPdfIcon />}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={file.filename} 
+                      secondary={fileStates[file._id]?.error ? 'Download failed' : ''}
+                      secondaryTypographyProps={{ color: 'error' }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+        ) : (
+          <Typography sx={{ mt: 2, color: 'text.secondary' }}>
+            No files have been uploaded for this project yet.
+          </Typography>
+        )}
+            
+
+            {/* Milestones */}
+            <Typography
+              variant="h4"
+              gutterBottom
+              sx={{
+                pt: 5,
+                pb: 2,
+                fontWeight: 700,
+                color: "#212121",
+                letterSpacing: 0.5,
+                textShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              }}
+            >
+              Milestones:
+            </Typography>
+
+            {milestones.map(([key, data]) => (
+              <Box key={key} sx={{ mb: 2 }}>
+                {/* Milestone Label */}
+                <Typography
+                  variant="h6"
+                  sx={{
+                    textTransform: "capitalize",
+                    mb: 1,
+                    fontWeight: "bold",
+                    color: "#333",
+                  }}
+                >
+                  {key}:
+                </Typography>
+
+                {/* Dates Row */}
+                <Grid
+                  sx={{
+                    display: "flex",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      bgcolor: "rgba(255,255,255,0.95)",
+                      borderRadius: 2,
+                      width: { xs: "100%", sm: "20%" },
+                      minWidth: 120,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                      border: "1.5px solid #e0e0e0",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "text.secondary",
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      Planned
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "#212121",
+                        fontWeight: 500,
+                        mt: 0.5,
+                      }}
+                    >
+                      {data.planned
+                        ? new Date(data.planned).toLocaleDateString()
+                        : "-"}
+                    </Typography>
+                  </Paper>
+
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      bgcolor: "rgba(255,255,255,0.95)",
+                      borderRadius: 2,
+                      width: { xs: "100%", sm: "20%" },
+                      minWidth: 120,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                      border: "1.5px solid #e0e0e0",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "text.secondary",
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      Actual
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "#212121",
+                        fontWeight: 500,
+                        mt: 0.5,
+                      }}
+                    >
+                      {data.actual
+                        ? new Date(data.actual).toLocaleDateString()
+                        : "-"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Box>
+            ))}
+
+            <Box
+              sx={{
+                alignSelf: "center",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+                py: 7,
+              }}
+            >
+              <ColourButton
+                startIcon={<EditIcon />}
+                onClick={handleEditOpen}
+                sx={{
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  background: "#212121",
+                  color: "#fff",
+                  px: 3,
+                  py: 1.2,
+                  boxShadow: 2,
+                  "&:hover": {
+                    background: "#333",
+                    color: "#fff",
+                  },
+                }}
+              >
+                Edit
+              </ColourButton>
+
+              <UploadFilesButton  projectId={id} refresh={handleUploadSuccess}/>
+
+              <Button
+                variant="outlined"
+                color="error"
+                sx={{
+                  borderWidth: 2,
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  background: "rgba(255,255,255,0.85)",
+                  boxShadow: 1,
+                  "&:hover": {
+                    backgroundColor: "error.main",
+                    color: "white",
+                  },
+                }}
+                startIcon={<DeleteIcon />}
+                onClick={handleDeleteDialogueOpen}
+              >
+                Delete
+              </Button>
+            </Box>
           </Box>
         </Box>
       </div>
@@ -348,25 +623,66 @@ const ProjectDetailsPage = () => {
         open={deleteDialogueOpen}
         keepMounted
         onClose={handleDeleteDialogueClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: "rgba(255,255,255,0.98)",
+            boxShadow: 4,
+            px: 2,
+            py: 1,
+          },
+        }}
       >
-        <DialogTitle>{`Delete Project - ${project.projectName}?`}</DialogTitle>
-        <Typography sx={{ px: 3, color: "text.secondary", fontSize: 14 }}>
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            color: "#d32f2f",
+            fontSize: 22,
+            letterSpacing: 0.5,
+            pb: 0,
+          }}
+        >{`Delete Project - ${project.projectName}?`}</DialogTitle>
+        <Typography
+          sx={{ px: 3, color: "text.secondary", fontSize: 15, pt: 1 }}
+        >
           This action cannot be undone.
         </Typography>
         <DialogActions sx={{ alignSelf: "center", py: 3 }}>
-          <ColourButton onClick={handleDeleteDialogueClose}>
+          <ColourButton
+            onClick={handleDeleteDialogueClose}
+            sx={{
+              fontWeight: 600,
+              borderRadius: 2,
+              background: "#212121",
+              color: "#fff",
+              px: 3,
+              py: 1.2,
+              boxShadow: 2,
+              "&:hover": {
+                background: "#333",
+                color: "#fff",
+              },
+            }}
+          >
             Cancel
           </ColourButton>
           <Button
             variant="contained"
             onClick={handleDeleteProject}
             color="error"
+            sx={{
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 3,
+              py: 1.2,
+              boxShadow: 2,
+            }}
           >
             Delete
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </div>
   );
 };
 

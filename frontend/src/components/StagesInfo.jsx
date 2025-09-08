@@ -65,7 +65,7 @@ const StagesInfo = () => {
   }, [token]);
 
   return (
-    <Box sx={{ width: "100%", height: "78vh" }}>
+    <Box sx={{ width: "100%", height: "80%" }}>
       {loading ? (
         <Box
           sx={{
@@ -83,7 +83,7 @@ const StagesInfo = () => {
           <Paper
             sx={{
               py: 3,
-              minWidth: 420,
+              // minWidth: 420,
               backgroundColor: "rgba(355, 355, 355, 0.60)",
               backdropFilter: "blur(30px)",
               display: "flex",

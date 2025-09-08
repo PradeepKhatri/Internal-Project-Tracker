@@ -126,7 +126,6 @@ const DeadlineList = () => {
         sx={{
           py: 3,
           px: 6,
-          minWidth: 420,
           borderRadius: 2,
           display: "flex",
           flexDirection: "column",
