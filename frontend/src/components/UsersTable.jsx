@@ -104,7 +104,7 @@ const UsersTable = ({ users, onSuccess }) => {
     if (!userToDelete) return;
     setLoading(true);
     try {
-      const response = await deleteUser(userToDelete._id, token);
+      const response = await deleteUser(userToDelete.userId, token);
 
       if (response?.message === "User deleted successfully.") {
         showSnackbar("User Removed", "success");
@@ -160,7 +160,7 @@ const UsersTable = ({ users, onSuccess }) => {
           <TableBody>
             {users.map((user, index) => (
               <TableRow
-                key={user._id}
+                key={user.userId}
                 sx={{
                   // backgroundColor: index % 2 === 0 ? "#fff" : "#fafafa",
                   transition: "background-color 0.2s ease",
@@ -179,7 +179,7 @@ const UsersTable = ({ users, onSuccess }) => {
                 <TableCell align="right">
                   <IconButton
                     size="small"
-                    onClick={() => handleEditButtonClick(user._id, token)}
+                    onClick={() => handleEditButtonClick(user.userId, token)}
                     sx={{
                       backgroundColor: "#212121",
                       color: "white",

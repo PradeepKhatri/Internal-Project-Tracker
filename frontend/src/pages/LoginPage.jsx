@@ -45,13 +45,6 @@ const LoginPage = () => {
   };
 
   return (
-    // <div
-    //   className="bg-cover bg-center min-h-screen flex items-center justify-center"
-    //   style={{
-    //     backgroundImage:
-    //       "url('https://res.cloudinary.com/dh2vwyyqj/image/upload/v1754840220/Digihomes-Banner_f5zyso.png')",
-    //   }}
-    // >
     <div
       className="bg-cover bg-top bg-fixed min-h-screen flex items-center justify-center"
       style={{

@@ -199,7 +199,7 @@ const ProjectsTable = ({ projects, stage }) => {
           <TableBody>
             {filteredProjects.map((project, index) => (
               <TableRow
-                key={project._id}
+                key={project.projectId}
                 sx={{
                   // backgroundColor: index % 2 === 0 ? "#fff" : "#fafafa",
 
@@ -267,7 +267,7 @@ const ProjectsTable = ({ projects, stage }) => {
                   <Box display="flex" gap={2}>
                     <IconButton
                       component={RouterLink}
-                      to={`/project-details/${project._id}`}
+                      to={`/project-details/${project.projectId}`}
                       sx={{
                         backgroundColor: "#212121",
                         color: "white",

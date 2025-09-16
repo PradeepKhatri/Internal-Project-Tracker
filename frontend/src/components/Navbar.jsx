@@ -41,8 +41,10 @@ const Navbar = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
-        position="static"
+        position="sticky"
         sx={{
+          top: 0,
+          zIndex: 1100,
           background: (theme) => `linear-gradient(
         to bottom,
         ${theme.palette.grey[800]} 0%,

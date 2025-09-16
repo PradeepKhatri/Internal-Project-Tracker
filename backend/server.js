@@ -4,14 +4,19 @@ import cors from 'cors';
 import { connectDB } from './src/db/db.js';
 import userRouter from './src/routes/user.routes.js';
 import projectRouter from './src/routes/project.routes.js';
+// import { connectAndLog } from './src/db/db.js';
 
 dotenv.config();
 
 connectDB();
-
+// connectAndLog();
+// runTestQuery
+// hkkjhgfhg
 const app = express();
 
-// Enable CORS for all routes
+// asdfghjklyt
+
+// Enable CORS for all routess
 app.use(cors());
 
 app.use(express.json());

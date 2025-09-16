@@ -1,7 +1,6 @@
-import User from "../models/User.model.js";
-import jwt from "jsonwebtoken";
+import { User } from "../models/index.js";
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
+import jwt from 'jsonwebtoken';
 
 const CreateUser = async (req, res) => {
   try {
@@ -11,7 +10,7 @@ const CreateUser = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ where: { email: email } });
     if (existingUser) {
       return res
         .status(409)
@@ -21,19 +20,17 @@ const CreateUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new User({
+    const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
     });
 
-    await newUser.save();
-
     return res.status(201).json({
       message: "User created successfully",
       user: {
-        id: newUser._id,
+        id: newUser.userId,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
@@ -41,6 +38,11 @@ const CreateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("CreateUser error:", error);
+    if (error.name === "SequelizeValidationError") {
+      return res
+        .status(400)
+        .json({ message: error.errors.map((e) => e.message).join(", ") });
+    }
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -53,7 +55,7 @@ const UserLogin = async (req, res) => {
       return res.status(400).json({ message: "You need access to Login" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email: email } });
     if (!user) {
       return res
         .status(403)
@@ -66,7 +68,7 @@ const UserLogin = async (req, res) => {
     }
 
     const payload = {
-      id: user._id,
+      id: user.userId,
       email: user.email,
       role: user.role,
     };
@@ -97,7 +99,7 @@ const UpdatePassword = async (req, res) => {
         .json({ message: "Email & password are required!" });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findByPk(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -124,7 +126,9 @@ const UpdatePassword = async (req, res) => {
 
 const GetUsers = async (req, res) => {
   try {
-    const users = await User.find({});
+    const users = await User.findAll({
+      attributes: { exclude: ["password"] }, // Exclude password from the result
+    });
 
     if (!users || users.length === 0) {
       return res.status(200).json({ message: "No users to display" });
@@ -142,29 +146,25 @@ const UpdateUserRole = async (req, res) => {
 
     const { role } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid user ID format." });
-    }
-
     const validRoles = ["viewer", "admin", "superadmin"];
 
     if (!role || !validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid Role" });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { role: role },
-      { new: true }
-    ).select("-password");
-
-    if (!updatedUser) {
-      return res.status(400).json({ message: "User Not Found." });
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
     }
+    user.role = role;
+    await user.save();
+
+    const userToReturn = { ...user.get({ plain: true }) };
+    delete userToReturn.password;
 
     res.status(200).json({
       message: "User role updated successfully!",
-      user: updatedUser,
+      user: userToReturn,
     });
   } catch (error) {
     console.log("Error Updating Role: ", error);
@@ -180,11 +180,9 @@ const GetUserById = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid user ID format." });
-    }
-
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ['password'] }
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -200,16 +198,12 @@ const DeleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid user ID format." });
-    }
-  
-    const deletedUser = await User.findByIdAndDelete(id);
-
-    if (!deletedUser) {
+    const deletedCount = await User.destroy({
+      where: { userId: id }
+    });
+    if (deletedCount === 0) {
       return res.status(404).json({ message: "User not found." });
     }
-
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
     console.error("Error deleting user:", error);

@@ -20,52 +20,53 @@ const App = () => {
   return (
     <>
       {location.pathname !== "/login" && <Navbar />}
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+      <main className="main_content">
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute>
-              <ProjectsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute>
-              <UsersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/deadlines"
-          element={
-            <ProtectedRoute>
-              <DeadLinesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/project-details/:id"
-          element={
-            <ProtectedRoute>
-              <ProjectDetailsPage />
-            </ProtectedRoute>
-          }
-        />
-
-      </Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <ProjectsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/deadlines"
+            element={
+              <ProtectedRoute>
+                <DeadLinesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/project-details/:id"
+            element={
+              <ProtectedRoute>
+                <ProjectDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </main>
     </>
   );
 };

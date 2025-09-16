@@ -35,7 +35,7 @@ const EditUserForm = ({ open, onClose, user }) => {
       const updatedResponse = await updateUserDetail(
         { role },
         token,
-        user._id
+        user.userId
       );
 
       showSnackbar("User Role Updated!", "success");

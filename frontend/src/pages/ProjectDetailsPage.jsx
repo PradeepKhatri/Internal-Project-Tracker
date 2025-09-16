@@ -15,7 +15,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemButton, 
+  ListItemButton,
   IconButton
 } from "@mui/material";
 import ColourButton from "../components/ColourButton";
@@ -121,50 +121,34 @@ const ProjectDetailsPage = () => {
   };
 
   const handleFileClick = async (file) => {
-    setFileStates(prev => ({ ...prev, [file._id]: { loading: true, error: false } }));
-
+    setFileStates(prev => ({ ...prev, [file.fileId]: { loading: true, error: false } }));
     try {
-      // 1. Fetch the file data as a blob using our authenticated service
-      const fileBlob = await downloadFile(project._id, file._id, token);
-      
-      // 2. Create a temporary URL from the blob data
+      const fileBlob = await downloadFile(project.projectId, file.fileId, token);
       const fileURL = URL.createObjectURL(fileBlob);
-
-      // 3. Open the temporary URL in a new tab
       window.open(fileURL, '_blank');
-      
-      // Reset state for this file
-      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: false } }));
-
-      
-
+      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: false } }));
     } catch (error) {
       console.error(error);
-      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: true } }));
-
+      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: true } }));
     }
   };
 
   const handleDeleteFile = async (file) => {
-    setFileStates(prev => ({ ...prev, [file._id]: { loading: true, error: false } }));
+    setFileStates(prev => ({ ...prev, [file.fileId]: { loading: true, error: false } }));
     try {
-      await deleteFile(project._id, file._id, token);
-      // Remove the deleted file from the project state
+      await deleteFile(project.projectId, file.fileId, token);
       setProject(prev => ({
         ...prev,
-        files: prev.files.filter(f => f._id !== file._id)
+        files: prev.files.filter(f => f.fileId !== file.fileId)
       }));
-      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: false } }));
+      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: false } }));
       showSnackbar("File deleted", "success");
-
-      
     } catch (error) {
-      setFileStates(prev => ({ ...prev, [file._id]: { loading: false, error: true } }));
+      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: true } }));
       showSnackbar(error?.message || "Failed to delete file.", "error");
     }
   };
 
-  // Add this function to refresh the project (and thus the files) after upload
   const handleUploadSuccess = async () => {
     try {
       const receivedData = await getProjectById(id, token);
@@ -173,8 +157,6 @@ const ProjectDetailsPage = () => {
       console.error("Failed to refresh project after upload", error);
     }
   };
-
-
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -202,21 +184,28 @@ const ProjectDetailsPage = () => {
     );
   }
 
+  const milestones = [
+    { label: 'Start', plannedDate: project.milestoneStartPlanned, actualDate: project.milestoneStartActual },
+    { label: 'BRD Sign-Off', plannedDate: project.milestoneBrdSignOffPlanned, actualDate: project.milestoneBrdSignOffActual },
+    { label: 'Design Approval', plannedDate: project.milestoneDesignApprovalPlanned, actualDate: project.milestoneDesignApprovalActual },
+    { label: 'UAT Sign-Off', plannedDate: project.milestoneUatSignOffPlanned, actualDate: project.milestoneUatSignOffActual },
+    { label: 'Deployment', plannedDate: project.milestoneDeploymentPlanned, actualDate: project.milestoneDeploymentActual },
+  ];
+
+  // UPDATED: Filter out new ID fields
   const filteredDetails = Object.entries(project).filter(
     ([key]) =>
       ![
-        "id",
-        "_id",
+        "projectId",
+        "projectManagerId", // Exclude the raw ID
         "createdAt",
         "updatedAt",
-        "__v",
-        "milestone",
-        "projectName",
-        "files",
+        "milestoneStartPlanned", "milestoneStartActual", "milestoneBrdSignOffPlanned",
+        "milestoneBrdSignOffActual", "milestoneDesignApprovalPlanned", "milestoneDesignApprovalActual",
+        "milestoneUatSignOffPlanned", "milestoneUatSignOffActual", "milestoneDeploymentPlanned",
+        "milestoneDeploymentActual", "projectName", "files"
       ].includes(key)
   );
-
-  const milestones = Object.entries(project.milestone || {});
 
 
   return (
@@ -402,41 +391,41 @@ const ProjectDetailsPage = () => {
               Uploaded Files:
             </Typography>
 
-              {project.files && project.files.length > 0 ? (
-            <List sx={{ bgcolor: 'background.paper', borderRadius: '8px', mt: 2 }}>
-              {project.files.map((file) => (
-                <ListItem key={file._id} 
-                  secondaryAction={
-                    <IconButton 
-                      edge="end" 
-                      aria-label="delete" 
-                      onClick={() => handleDeleteFile(file)} 
-                      disabled={fileStates[file._id]?.loading}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  }
-                  disablePadding
-                >
-                  <ListItemButton onClick={() => handleFileClick(file)} disabled={fileStates[file._id]?.loading}>
-                    <ListItemIcon>
-                      {fileStates[file._id]?.loading ? <CircularProgress size={24} /> : <PictureAsPdfIcon />}
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={file.filename} 
-                      secondary={fileStates[file._id]?.error ? 'Download failed' : ''}
-                      secondaryTypographyProps={{ color: 'error' }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-        ) : (
-          <Typography sx={{ mt: 2, color: 'text.secondary' }}>
-            No files have been uploaded for this project yet.
-          </Typography>
-        )}
-            
+            {project.files && project.files.length > 0 ? (
+              <List sx={{ bgcolor: 'background.paper', borderRadius: '8px', mt: 2 }}>
+                {project.files.map((file) => (
+                  <ListItem key={file._id}
+                    secondaryAction={
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={() => handleDeleteFile(file)}
+                        disabled={fileStates[file._id]?.loading}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    }
+                    disablePadding
+                  >
+                    <ListItemButton onClick={() => handleFileClick(file)} disabled={fileStates[file._id]?.loading}>
+                      <ListItemIcon>
+                        {fileStates[file._id]?.loading ? <CircularProgress size={24} /> : <PictureAsPdfIcon />}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={file.filename}
+                        secondary={fileStates[file._id]?.error ? 'Download failed' : ''}
+                        secondaryTypographyProps={{ color: 'error' }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography sx={{ mt: 2, color: 'text.secondary' }}>
+                No files have been uploaded for this project yet.
+              </Typography>
+            )}
+
 
             {/* Milestones */}
             <Typography
@@ -454,103 +443,27 @@ const ProjectDetailsPage = () => {
               Milestones:
             </Typography>
 
-            {milestones.map(([key, data]) => (
-              <Box key={key} sx={{ mb: 2 }}>
-                {/* Milestone Label */}
-                <Typography
-                  variant="h6"
-                  sx={{
-                    textTransform: "capitalize",
-                    mb: 1,
-                    fontWeight: "bold",
-                    color: "#333",
-                  }}
-                >
-                  {key}:
-                </Typography>
-
-                {/* Dates Row */}
-                <Grid
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      bgcolor: "rgba(255,255,255,0.95)",
-                      borderRadius: 2,
-                      width: { xs: "100%", sm: "20%" },
-                      minWidth: 120,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      border: "1.5px solid #e0e0e0",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: "bold",
-                        color: "text.secondary",
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      Planned
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        color: "#212121",
-                        fontWeight: 500,
-                        mt: 0.5,
-                      }}
-                    >
-                      {data.planned
-                        ? new Date(data.planned).toLocaleDateString()
-                        : "-"}
-                    </Typography>
-                  </Paper>
-
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      bgcolor: "rgba(255,255,255,0.95)",
-                      borderRadius: 2,
-                      width: { xs: "100%", sm: "20%" },
-                      minWidth: 120,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      border: "1.5px solid #e0e0e0",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: "bold",
-                        color: "text.secondary",
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      Actual
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        color: "#212121",
-                        fontWeight: 500,
-                        mt: 0.5,
-                      }}
-                    >
-                      {data.actual
-                        ? new Date(data.actual).toLocaleDateString()
-                        : "-"}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              </Box>
-            ))}
+            {
+              milestones.map((milestone) => (
+                <Box key={milestone.label} sx={{ mb: 2 }}>
+                  <Typography variant="h6">{milestone.label}:</Typography>
+                  <Grid sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                    <Paper variant="outlined" sx={{ p: 2, width: { xs: "100%", sm: "20%" } }}>
+                      <Typography variant="caption">Planned</Typography>
+                      <Typography variant="body1">
+                        {milestone.plannedDate ? new Date(milestone.plannedDate).toLocaleDateString() : "-"}
+                      </Typography>
+                    </Paper>
+                    <Paper variant="outlined" sx={{ p: 2, width: { xs: "100%", sm: "20%" } }}>
+                      <Typography variant="caption">Actual</Typography>
+                      <Typography variant="body1">
+                        {milestone.actualDate ? new Date(milestone.actualDate).toLocaleDateString() : "-"}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                </Box>
+              ))
+            }
 
             <Box
               sx={{
@@ -582,7 +495,7 @@ const ProjectDetailsPage = () => {
                 Edit
               </ColourButton>
 
-              <UploadFilesButton  projectId={id} refresh={handleUploadSuccess}/>
+              <UploadFilesButton projectId={id} refresh={handleUploadSuccess} />
 
               <Button
                 variant="outlined"
@@ -687,3 +600,4 @@ const ProjectDetailsPage = () => {
 };
 
 export default ProjectDetailsPage;
+

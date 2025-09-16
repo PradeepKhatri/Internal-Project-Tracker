@@ -1,14 +1,15 @@
-import Project from "../models/Project.model.js";
-import mongoose from "mongoose";
-import multer from "multer";
+import { Project, User, ProjectFile } from "../models/index.js";
 
 // GET all projects
 const GetProjects = async (req, res) => {
   try {
-    const projects = await Project.find({}).populate("projectManager");
-    if (!projects || projects.length === 0) {
-      return res.status(200).json({ message: "No projects to display" });
-    }
+    const projects = await Project.findAll({
+      include: {
+        model: User,
+        as: "projectManager",
+        attributes: ["userId", "name", "email"],
+      },
+    });
     res.status(200).json(projects);
   } catch (error) {
     console.log("Error fetching projects : ", error);
@@ -32,33 +33,36 @@ const CreateProject = async (req, res) => {
       return res.status(400).send({ message: "Missing Required Fields!" });
     }
 
-    const existingProject = await Project.findOne({ projectName });
+    const existingProject = await Project.findOne({ where: { projectName } });
     if (existingProject) {
       return res
         .status(409)
         .json({ message: "A project with this name already exists." });
     }
 
-
-    const newProject = new Project({
+    const newProject = await Project.create({
       projectName,
       department,
-      milestone,
       currentStage,
-      projectManager,
       projectPartner,
+      projectManagerId: projectManager,
+      milestoneStartPlanned: milestone.start.planned,
+      milestoneStartActual: milestone.start.actual,
+      milestoneBrdSignOffPlanned: milestone.brdSignOff.planned,
+      milestoneBrdSignOffActual: milestone.brdSignOff.actual,
+      milestoneDesignApprovalPlanned: milestone.designApproval.planned,
+      milestoneDesignApprovalActual: milestone.designApproval.actual,
+      milestoneUatSignOffPlanned: milestone.uatSignOff.planned,
+      milestoneUatSignOffActual: milestone.uatSignOff.actual,
+      milestoneDeploymentPlanned: milestone.deployment.planned,
+      milestoneDeploymentActual: milestone.deployment.actual,
     });
-
-    const savedProject = await newProject.save();
 
     res.status(200).json({
       message: "Project Created Successfully",
-      project: savedProject,
+      project: newProject,
     });
   } catch (error) {
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
-    }
     console.error("Error creating project:", error);
     return res
       .status(500)
@@ -70,18 +74,20 @@ const GetProjectById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid project ID format." });
-    }
-
-    if (!id) {
-      return res.status(400).json({ message: "Project ID is required." });
-    }
-
-    const project = await Project.findById(id).populate(
-      "projectManager",
-      "name email role"
-    );
+    const project = await Project.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: "projectManager",
+          attributes: ["userId", "name", "email"],
+        },
+        {
+          model: ProjectFile,
+          as: "files",
+          attributes: ["fileId", "filename", "contentType"],
+        },
+      ],
+    });
 
     if (!project) {
       return res.status(404).json({ message: "Project not found." });
@@ -100,18 +106,11 @@ const DeleteProject = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid project ID format." });
-    }
+    const deletedCount = await Project.destroy({
+      where: { projectId: id },
+    });
 
-    if (!id) {
-      return res.status(400).json({ message: "Project ID is required." });
-    }
-
-
-    const deleteProject = await Project.findByIdAndDelete(id);
-
-    if (!deleteProject) {
+    if (deletedCount === 0) {
       return res.status(404).json({ message: "Project Not Found" });
     }
 
@@ -129,33 +128,117 @@ const UpdateProject = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid project ID format." });
+    if (updates.projectManager) {
+      if (typeof updates.projectManager === 'object' && updates.projectManager !== null) {
+        updates.projectManagerId = updates.projectManager.userId;
+      } else {
+        updates.projectManagerId = updates.projectManager;
+      }
+      delete updates.projectManager; 
     }
 
-    const updatedProject = await Project.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
+    const [updatedCount] = await Project.update(updates, {
+      where: { projectId: id },
     });
 
-    if (!updatedProject) {
+    if (updatedCount === 0) {
       return res.status(404).send({ message: "Project Not Found" });
     }
 
-    res.status(200).json({
-      message: "Project Updated Successfully",
-      project: updatedProject,
-    });
+    const updatedProject = await Project.findByPk(id);
+    res.status(200).json({ message: "Project Updated Successfully", project: updatedProject });
   } catch (error) {
+    if (error.original && error.original.message.includes('Conversion failed')) {
+        return res.status(400).json({ message: "Invalid data format submitted. Please check the form fields." });
+    }
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
-// Export the upload middleware for use in your routes
+const UploadProjectFiles = async (req, res) => {
+  try {
+      const { id } = req.params;
+      const project = await Project.findByPk(id);
+
+      if (!project) {
+          return res.status(404).json({ msg: "Project not found." });
+      }
+
+      if (!req.files || req.files.length === 0) {
+          return res.status(400).json({ msg: "No files were uploaded." });
+      }
+
+      // Create a record in the ProjectFiles table for each uploaded file
+      const filePromises = req.files.map(file => {
+          return ProjectFile.create({
+              filename: file.originalname,
+              contentType: file.mimetype,
+              fileData: file.buffer,
+              projectId: project.projectId // Link the file to the project
+          });
+      });
+
+      await Promise.all(filePromises);
+
+      res.status(200).json({ msg: "Files uploaded successfully." });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send("Server Error");
+  }
+};
+
+// NEW: Get a single project file
+const GetProjectFile = async (req, res) => {
+  try {
+      const { projectId, fileId } = req.params;
+      const file = await ProjectFile.findOne({
+          where: {
+              fileId: fileId,
+              projectId: projectId
+          }
+      });
+
+      if (!file) {
+          return res.status(404).send("File not found.");
+      }
+
+      res.contentType(file.contentType);
+      res.send(file.fileData);
+  } catch (error) {
+      console.error("Error retrieving file:", error);
+      res.status(500).send("Server Error");
+  }
+};
+
+// NEW: Delete a single project file
+const DeleteProjectFile = async (req, res) => {
+  try {
+      const { projectId, fileId } = req.params;
+      const deletedCount = await ProjectFile.destroy({
+          where: {
+              fileId: fileId,
+              projectId: projectId
+          }
+      });
+
+      if (deletedCount === 0) {
+          return res.status(404).send("File not found.");
+      }
+
+      res.json({ msg: "File deleted successfully." });
+  } catch (error) {
+      console.error("Error deleting file:", error);
+      res.status(500).send("Server Error");
+  }
+};
+
 export {
   GetProjects,
   CreateProject,
   DeleteProject,
   GetProjectById,
-  UpdateProject, 
+  UpdateProject,
+  UploadProjectFiles,
+  GetProjectFile,
+  DeleteProjectFile
 };

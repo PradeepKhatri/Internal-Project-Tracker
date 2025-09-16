@@ -33,26 +33,29 @@ const ProjectsPage = () => {
     setIsFormOpen(true);
   };
   const closeForm = () => {
+    fetchProjects();
     setIsFormOpen(false);
   };
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        if (token) {
-          setLoading(true);
-          const projectData = await getProjects(token);
-          setProjects(projectData);
-        }
-      } catch (err) {
-        showSnackbar(err.message, "Error");
-      } finally {
-        setLoading(false);
+  const fetchProjects = async () => {
+    try {
+      if (token) {
+        setLoading(true);
+        const projectData = await getProjects(token);
+        setProjects(projectData);
       }
-    };
+    } catch (err) {
+      showSnackbar(err.message, "Error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    
 
     fetchProjects();
-  });
+  }, []);
 
   return (
     <div

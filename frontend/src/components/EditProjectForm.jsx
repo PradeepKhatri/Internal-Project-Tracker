@@ -41,16 +41,11 @@ const EditProjectForm = ({ open, onClose, initialData, projectId }) => {
   };
 
   const handleDateChange = (milestoneKey, date, dateType) => {
+    const fieldName = `milestone${milestoneKey.charAt(0).toUpperCase() + milestoneKey.slice(1)}${dateType.charAt(0).toUpperCase() + dateType.slice(1)}`;
+
     setFormData((prev) => ({
       ...prev,
-      milestone: {
-        ...prev.milestone,
-        [milestoneKey]: {
-          ...prev.milestone[milestoneKey],
-
-          [dateType]: date ? dayjs(date).toDate() : null,
-        },
-      },
+      [fieldName]: date ? dayjs(date).toDate() : null,
     }));
   };
 
@@ -79,9 +74,21 @@ const EditProjectForm = ({ open, onClose, initialData, projectId }) => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        projectManager: initialData.projectManager?.userId || initialData.projectManagerId || ''
+      });
+    }
+  }, [initialData]);
+  if (!formData) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{alignSelf:"center", py:4}}>
+      <DialogTitle sx={{ alignSelf: "center", py: 4 }}>
         <Typography variant="h5" component="span" fontWeight={600}>
           Edit Details for {formData.projectName}
         </Typography>
@@ -125,7 +132,7 @@ const EditProjectForm = ({ open, onClose, initialData, projectId }) => {
                 id="projectManager"
                 label="Project Manager"
                 name="projectManager"
-                value={formData.projectManager?._id || formData.projectManager || ""}
+                value={formData.projectManager || ""} 
                 onChange={handleChange}
               >
                 {managers
@@ -134,7 +141,7 @@ const EditProjectForm = ({ open, onClose, initialData, projectId }) => {
                       manager.role === "admin" || manager.role === "superadmin"
                   )
                   .map((manager) => (
-                    <MenuItem key={manager._id} value={manager._id}>
+                    <MenuItem key={manager.userId} value={manager.userId}>
                       {manager.name}
                     </MenuItem>
                   ))}
@@ -185,37 +192,23 @@ const EditProjectForm = ({ open, onClose, initialData, projectId }) => {
               { key: "uatSignOff", label: "UAT Signoff Date" },
               { key: "deployment", label: "Deployment Date" },
             ].map(({ key, label }) => (
-              <Box key={key} sx={{ mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ mb: 3 }}>
-                  {label}
-                </Typography>
+              <Box key={key} sx={{ mb: 2, width: '100%' }}>
+                <Typography variant="subtitle1" sx={{ mb: 3 }}>{label}</Typography>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <Grid container columnGap={5} spacing={2}>
-                    <Grid >
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
                       <DatePicker
                         label="Planned"
-                        value={
-                          formData.milestone[key]?.planned
-                            ? dayjs(formData.milestone[key].planned)
-                            : null
-                        }
-                        onChange={(date) =>
-                          handleDateChange(key, date, "planned")
-                        }
+                        value={dayjs(formData[`milestone${key.charAt(0).toUpperCase() + key.slice(1)}Planned`] || null)}
+                        onChange={(date) => handleDateChange(key, date, "planned")}
                         slotProps={{ textField: { fullWidth: true } }}
                       />
                     </Grid>
-                    <Grid>
+                    <Grid item xs={12} sm={6}>
                       <DatePicker
                         label="Actual"
-                        value={
-                          formData.milestone[key]?.actual
-                            ? dayjs(formData.milestone[key].actual)
-                            : null
-                        }
-                        onChange={(date) =>
-                          handleDateChange(key, date, "actual")
-                        }
+                        value={dayjs(formData[`milestone${key.charAt(0).toUpperCase() + key.slice(1)}Actual`] || null)}
+                        onChange={(date) => handleDateChange(key, date, "actual")}
                         slotProps={{ textField: { fullWidth: true } }}
                       />
                     </Grid>

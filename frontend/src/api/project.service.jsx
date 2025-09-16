@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const PROJECTS_API = "http://localhost:5000/api/projects";
-const ADD_PROJECTS_API = "http://localhost:5000/api/create-project";
+const ADD_PROJECTS_API = "http://localhost:5000/api/projects";
 const GET_SINGLE_PROJECT = "http://localhost:5000/api/projects";
 
 

@@ -1,76 +1,67 @@
-import mongoose from "mongoose";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/db.js';
 
-const FileSchema = new mongoose.Schema({
-  filename: { type: String, required: true },
-  contentType: { type: String, required: true },
-  data: { type: Buffer, required: true },
-});
-const ProjectSchema = new mongoose.Schema(
-  {
-    projectName: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    department: {
-      type: String,
-      required: true,
-      trim: true,
-      unique: false,
-    },
-    milestone: {
-      start: {
-        planned: { type: Date, required: true },
-        actual: { type: Date },
-      },
-      brdSignOff: {
-        planned: { type: Date, required: true },
-        actual: { type: Date },
-      },
-      designApproval: {
-        planned: { type: Date, required: true },
-        actual: { type: Date },
-      },
-      uatSignOff: {
-        planned: { type: Date, required: true },
-        actual: { type: Date },
-      },
-      deployment: {
-        planned: { type: Date, required: true },
-        actual: { type: Date },
-      },
-    },
-    currentStage: {
-      type: String,
-      required: true,
-      enum: [
-        "Ideation",
-        "Requirement",
-        "Development",
-        "Testing",
-        "UAT",
-        "Go live",
-      ],
-      default: "Ideation",
-    },
-    projectManager: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    projectPartner: {
-      type: String,
-      trim: true,
-    },
-    files: {
-      type: [FileSchema],
-      default: [],
-    },
+const Project = sequelize.define('Project', {
+  projectId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
   },
-  { timestamps: true }
-);
-
-const Project = mongoose.model("Project", ProjectSchema);
+  projectName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  department: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  currentStage: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'Ideation',
+  },
+  projectPartner: {
+    type: DataTypes.STRING,
+  },
+  milestoneStartPlanned: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  milestoneStartActual: {
+    type: DataTypes.DATE,
+  },
+  milestoneBrdSignOffPlanned: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  milestoneBrdSignOffActual: {
+    type: DataTypes.DATE,
+  },
+  milestoneDesignApprovalPlanned: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  milestoneDesignApprovalActual: {
+    type: DataTypes.DATE,
+  },
+  milestoneUatSignOffPlanned: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  milestoneUatSignOffActual: {
+    type: DataTypes.DATE,
+  },
+  milestoneDeploymentPlanned: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  milestoneDeploymentActual: {
+    type: DataTypes.DATE,
+  },
+}, {
+  timestamps: true,
+  tableName: 'Projects',
+});
 
 export default Project;

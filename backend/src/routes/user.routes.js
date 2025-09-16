@@ -16,7 +16,8 @@ const router = express.Router();
 
 router.post('/login', UserLogin);
 
-router.post('/create-user', authenticate, superadminMiddleware, CreateUser); 
+// router.post('/create-user', authenticate, superadminMiddleware, CreateUser); 
+router.post('/create-user', CreateUser); 
 
 router.patch('/me/password', authenticate, UpdatePassword);
 

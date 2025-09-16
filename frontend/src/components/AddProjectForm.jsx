@@ -69,6 +69,7 @@ const AddProjectForm = ({ open, onClose, editMode, initialData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData);
     try {
       await createProject(formData, token);
       showSnackbar("Project created successfully!", "success");
@@ -89,7 +90,6 @@ const AddProjectForm = ({ open, onClose, editMode, initialData }) => {
       try {
         const receivedData = await getUsers(token);
         setManagers(receivedData);
-        console.log(managers);
       } catch (error) {
         console.log(error);
       }
@@ -153,7 +153,7 @@ const AddProjectForm = ({ open, onClose, editMode, initialData }) => {
                       manager.role === "admin" || manager.role === "superadmin"
                   )
                   .map((manager) => (
-                    <MenuItem key={manager._id} value={manager._id}>
+                    <MenuItem key={manager.userId} value={manager.userId}>
                       {manager.name}
                     </MenuItem>
                   ))}

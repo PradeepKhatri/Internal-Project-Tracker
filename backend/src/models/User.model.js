@@ -1,33 +1,44 @@
-import mongoose from "mongoose";
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../db/db.js';
 
-const UserSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    password: {
-      type: String,
-      required : true,
-
-    },
-    role: {
-      type: String,
-      enum: ["viewer", "admin", "superadmin"],
-      default: "viewer",
+const User = sequelize.define('User', {
+  userId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  role: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'viewer',
+    validate: {
+      isIn: [['viewer', 'admin', 'superadmin']],
     },
   },
-  { timestamps: true }
-);
+}, {
+  timestamps: true,
+  tableName: 'Users',
+});
 
-const User = mongoose.model("User", UserSchema);
+User.associate = (models) => {
+  User.hasMany(models.Project, {
+    foreignKey: 'projectManagerId',
+    as: 'managedProjects',
+  });
+};
 
 export default User;
