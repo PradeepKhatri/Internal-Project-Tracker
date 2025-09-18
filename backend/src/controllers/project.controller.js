@@ -9,6 +9,9 @@ const GetProjects = async (req, res) => {
         as: "projectManager",
         attributes: ["userId", "name", "email"],
       },
+      order: [
+        ['createdAt', 'DESC']
+      ]
     });
     res.status(200).json(projects);
   } catch (error) {

@@ -2,6 +2,7 @@ import { sequelize } from '../db/db.js';
 import User from './User.model.js';
 import Project from './Project.model.js';
 import ProjectFile from './ProjectFile.model.js';
+import Announcement from './Announcement.model.js';
 
 // 1. Define relationship between User and Project
 // A User (as a Project Manager) can have many Projects
@@ -29,4 +30,4 @@ ProjectFile.belongsTo(Project, {
 
 
 // Export everything for use in other parts of the app
-export { sequelize, User, Project, ProjectFile };
+export { sequelize, User, Project, ProjectFile, Announcement };

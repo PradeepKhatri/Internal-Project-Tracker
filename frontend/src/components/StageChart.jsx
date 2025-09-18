@@ -13,6 +13,7 @@ const STAGES = [
   "Go live",
 ];
 
+// Kept the same colors
 const STAGE_COLORS = [
   "#D3D3D3", 
   "#2196F3", 
@@ -24,92 +25,90 @@ const STAGE_COLORS = [
 
 const StageChart = () => {
   const { token } = useAuth();
-  const [stageCounts, setStageCounts] = useState({});
+  const [pieData, setPieData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
+      if (!token) return;
       setLoading(true);
       try {
         const projects = await getProjects(token);
-        const counts = {};
-        STAGES.forEach((stage) => {
-          counts[stage] = 0;
-        });
-        projects.forEach((project) => {
-          if (
-            project.currentStage &&
-            counts.hasOwnProperty(project.currentStage)
-          ) {
-            counts[project.currentStage]++;
+        
+        // REWRITTEN: More concise logic using .reduce() to count stages
+        const counts = projects.reduce((acc, project) => {
+          if (project.currentStage && STAGES.includes(project.currentStage)) {
+            acc[project.currentStage] = (acc[project.currentStage] || 0) + 1;
           }
-        });
-        setStageCounts(counts);
+          return acc;
+        }, {});
+
+        const chartData = STAGES.map((stage, idx) => ({
+          id: idx,
+          value: counts[stage] || 0,
+          label: stage,
+          color: STAGE_COLORS[idx],
+        })).filter((d) => d.value > 0);
+
+        setPieData(chartData);
       } catch (err) {
-        setStageCounts({});
+        console.error("Failed to fetch project stages:", err);
+        setPieData([]);
       } finally {
         setLoading(false);
       }
     };
-    if (token) fetchProjects();
+    fetchProjects();
   }, [token]);
 
-  const pieData = STAGES.map((stage, idx) => ({
-    id: idx,
-    value: stageCounts[stage] || 0,
-    label: stage,
-    color: STAGE_COLORS[idx],
-  })).filter((d) => d.value > 0);
-
   return (
-    <div className="w-1/2">
-      <Paper
-        sx={{
-          py: 5,
-          minWidth: 420,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-        elevation={5}
-      >
-        <Typography variant="h5 " sx={{ mb: 4, fontWeight: "bold" }}>
-          Projects by Stage
-        </Typography>
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: 200,
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : pieData.length === 0 ? (
-          <Typography >No project data available.</Typography>
-        ) : (
-          <PieChart
-            series={[
-              {
-                data: pieData,
-                color: (d) => d.data.color,
-                highlightScope: { fade: "global", highlight: "item" },
-                faded: {
-                  innerRadius: 30,
-                  additionalRadius: -30,
-                  color: "gray",
-                },
-              },
-            ]}
-            width={320}
-            height={320}
-            legend={{ hidden: false }}
-          />
-        )}
-      </Paper>
-    </div>
+    <Paper
+      sx={{
+        py: 3,
+        px: { xs: 2, md: 3 },
+        borderRadius: 2,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        backgroundColor: "rgba(355, 355, 355, 0.60)",
+        backdropFilter: "blur(30px)",
+        height: "100%", 
+      }}
+      elevation={5}
+    >
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+        Projects by Stage
+      </Typography>
+      {loading ? (
+        <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <CircularProgress />
+        </Box>
+      ) :  (
+        <PieChart
+        series={[
+          {
+            data: pieData,
+            color: (d) => d.data.color,
+            highlightScope: { fade: "global", highlight: "item" },
+            faded: {
+              innerRadius: 30,
+              additionalRadius: -30,
+              color: "gray",
+            },
+          },
+        ]}
+          height={400} 
+          legend={{
+            direction: 'row',
+            position: { vertical: 'bottom', horizontal: 'middle' },
+            padding: 0,
+          }}
+          sx={{
+            width: '100% !important',
+          }}
+        />
+      )}
+    </Paper>
   );
 };
 

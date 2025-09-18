@@ -16,7 +16,7 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import ColourButton from "../components/ColourButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -25,7 +25,13 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { deleteFile, deleteProject, downloadFile, getFileUrl, getProjectById } from "../api/project.service";
+import {
+  deleteFile,
+  deleteProject,
+  downloadFile,
+  getFileUrl,
+  getProjectById,
+} from "../api/project.service";
 import { useAuth } from "../context/AuthContext";
 import EditIcon from "@mui/icons-material/Edit";
 import EditProjectForm from "../components/EditProjectForm";
@@ -33,7 +39,7 @@ import { useSnackbar } from "../context/SnackbarContext";
 import DeleteIcon from "@mui/icons-material/Delete";
 import UploadFilesButton from "../components/UploadFilesButton";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 const ProjectDetailsPage = () => {
   const navigate = useNavigate();
@@ -68,7 +74,6 @@ const ProjectDetailsPage = () => {
   const [deleteDialogueOpen, setDeleteDialogueOpen] = useState(false);
 
   const [fileStates, setFileStates] = useState({});
-
 
   const handleEditOpen = () => {
     if (!user || user.role === "viewer") {
@@ -121,30 +126,52 @@ const ProjectDetailsPage = () => {
   };
 
   const handleFileClick = async (file) => {
-    setFileStates(prev => ({ ...prev, [file.fileId]: { loading: true, error: false } }));
+    setFileStates((prev) => ({
+      ...prev,
+      [file.fileId]: { loading: true, error: false },
+    }));
     try {
-      const fileBlob = await downloadFile(project.projectId, file.fileId, token);
+      const fileBlob = await downloadFile(
+        project.projectId,
+        file.fileId,
+        token
+      );
       const fileURL = URL.createObjectURL(fileBlob);
-      window.open(fileURL, '_blank');
-      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: false } }));
+      window.open(fileURL, "_blank");
+      setFileStates((prev) => ({
+        ...prev,
+        [file.fileId]: { loading: false, error: false },
+      }));
     } catch (error) {
       console.error(error);
-      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: true } }));
+      setFileStates((prev) => ({
+        ...prev,
+        [file.fileId]: { loading: false, error: true },
+      }));
     }
   };
 
   const handleDeleteFile = async (file) => {
-    setFileStates(prev => ({ ...prev, [file.fileId]: { loading: true, error: false } }));
+    setFileStates((prev) => ({
+      ...prev,
+      [file.fileId]: { loading: true, error: false },
+    }));
     try {
       await deleteFile(project.projectId, file.fileId, token);
-      setProject(prev => ({
+      setProject((prev) => ({
         ...prev,
-        files: prev.files.filter(f => f.fileId !== file.fileId)
+        files: prev.files.filter((f) => f.fileId !== file.fileId),
       }));
-      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: false } }));
+      setFileStates((prev) => ({
+        ...prev,
+        [file.fileId]: { loading: false, error: false },
+      }));
       showSnackbar("File deleted", "success");
     } catch (error) {
-      setFileStates(prev => ({ ...prev, [file.fileId]: { loading: false, error: true } }));
+      setFileStates((prev) => ({
+        ...prev,
+        [file.fileId]: { loading: false, error: true },
+      }));
       showSnackbar(error?.message || "Failed to delete file.", "error");
     }
   };
@@ -185,11 +212,31 @@ const ProjectDetailsPage = () => {
   }
 
   const milestones = [
-    { label: 'Start', plannedDate: project.milestoneStartPlanned, actualDate: project.milestoneStartActual },
-    { label: 'BRD Sign-Off', plannedDate: project.milestoneBrdSignOffPlanned, actualDate: project.milestoneBrdSignOffActual },
-    { label: 'Design Approval', plannedDate: project.milestoneDesignApprovalPlanned, actualDate: project.milestoneDesignApprovalActual },
-    { label: 'UAT Sign-Off', plannedDate: project.milestoneUatSignOffPlanned, actualDate: project.milestoneUatSignOffActual },
-    { label: 'Deployment', plannedDate: project.milestoneDeploymentPlanned, actualDate: project.milestoneDeploymentActual },
+    {
+      label: "Start",
+      plannedDate: project.milestoneStartPlanned,
+      actualDate: project.milestoneStartActual,
+    },
+    {
+      label: "BRD Sign-Off",
+      plannedDate: project.milestoneBrdSignOffPlanned,
+      actualDate: project.milestoneBrdSignOffActual,
+    },
+    {
+      label: "Design Approval",
+      plannedDate: project.milestoneDesignApprovalPlanned,
+      actualDate: project.milestoneDesignApprovalActual,
+    },
+    {
+      label: "UAT Sign-Off",
+      plannedDate: project.milestoneUatSignOffPlanned,
+      actualDate: project.milestoneUatSignOffActual,
+    },
+    {
+      label: "Deployment",
+      plannedDate: project.milestoneDeploymentPlanned,
+      actualDate: project.milestoneDeploymentActual,
+    },
   ];
 
   // UPDATED: Filter out new ID fields
@@ -200,13 +247,20 @@ const ProjectDetailsPage = () => {
         "projectManagerId", // Exclude the raw ID
         "createdAt",
         "updatedAt",
-        "milestoneStartPlanned", "milestoneStartActual", "milestoneBrdSignOffPlanned",
-        "milestoneBrdSignOffActual", "milestoneDesignApprovalPlanned", "milestoneDesignApprovalActual",
-        "milestoneUatSignOffPlanned", "milestoneUatSignOffActual", "milestoneDeploymentPlanned",
-        "milestoneDeploymentActual", "projectName", "files"
+        "milestoneStartPlanned",
+        "milestoneStartActual",
+        "milestoneBrdSignOffPlanned",
+        "milestoneBrdSignOffActual",
+        "milestoneDesignApprovalPlanned",
+        "milestoneDesignApprovalActual",
+        "milestoneUatSignOffPlanned",
+        "milestoneUatSignOffActual",
+        "milestoneDeploymentPlanned",
+        "milestoneDeploymentActual",
+        "projectName",
+        "files",
       ].includes(key)
   );
-
 
   return (
     <div
@@ -392,9 +446,12 @@ const ProjectDetailsPage = () => {
             </Typography>
 
             {project.files && project.files.length > 0 ? (
-              <List sx={{ bgcolor: 'background.paper', borderRadius: '8px', mt: 2 }}>
+              <List
+                sx={{ bgcolor: "background.paper", borderRadius: "8px", mt: 2 }}
+              >
                 {project.files.map((file) => (
-                  <ListItem key={file._id}
+                  <ListItem
+                    key={file._id}
                     secondaryAction={
                       <IconButton
                         edge="end"
@@ -407,25 +464,33 @@ const ProjectDetailsPage = () => {
                     }
                     disablePadding
                   >
-                    <ListItemButton onClick={() => handleFileClick(file)} disabled={fileStates[file._id]?.loading}>
+                    <ListItemButton
+                      onClick={() => handleFileClick(file)}
+                      disabled={fileStates[file._id]?.loading}
+                    >
                       <ListItemIcon>
-                        {fileStates[file._id]?.loading ? <CircularProgress size={24} /> : <PictureAsPdfIcon />}
+                        {fileStates[file._id]?.loading ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          <PictureAsPdfIcon />
+                        )}
                       </ListItemIcon>
                       <ListItemText
                         primary={file.filename}
-                        secondary={fileStates[file._id]?.error ? 'Download failed' : ''}
-                        secondaryTypographyProps={{ color: 'error' }}
+                        secondary={
+                          fileStates[file._id]?.error ? "Download failed" : ""
+                        }
+                        secondaryTypographyProps={{ color: "error" }}
                       />
                     </ListItemButton>
                   </ListItem>
                 ))}
               </List>
             ) : (
-              <Typography sx={{ mt: 2, color: 'text.secondary' }}>
+              <Typography sx={{ mt: 2, color: "text.secondary" }}>
                 No files have been uploaded for this project yet.
               </Typography>
             )}
-
 
             {/* Milestones */}
             <Typography
@@ -443,27 +508,35 @@ const ProjectDetailsPage = () => {
               Milestones:
             </Typography>
 
-            {
-              milestones.map((milestone) => (
-                <Box key={milestone.label} sx={{ mb: 2 }}>
-                  <Typography variant="h6">{milestone.label}:</Typography>
-                  <Grid sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                    <Paper variant="outlined" sx={{ p: 2, width: { xs: "100%", sm: "20%" } }}>
-                      <Typography variant="caption">Planned</Typography>
-                      <Typography variant="body1">
-                        {milestone.plannedDate ? new Date(milestone.plannedDate).toLocaleDateString() : "-"}
-                      </Typography>
-                    </Paper>
-                    <Paper variant="outlined" sx={{ p: 2, width: { xs: "100%", sm: "20%" } }}>
-                      <Typography variant="caption">Actual</Typography>
-                      <Typography variant="body1">
-                        {milestone.actualDate ? new Date(milestone.actualDate).toLocaleDateString() : "-"}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Box>
-              ))
-            }
+            {milestones.map((milestone) => (
+              <Box key={milestone.label} sx={{ mb: 2 }}>
+                <Typography variant="h6">{milestone.label}:</Typography>
+                <Grid sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{ p: 2, width: { xs: "100%", sm: "20%" } }}
+                  >
+                    <Typography variant="caption">Planned</Typography>
+                    <Typography variant="body1">
+                      {milestone.plannedDate
+                        ? new Date(milestone.plannedDate).toLocaleDateString()
+                        : "-"}
+                    </Typography>
+                  </Paper>
+                  <Paper
+                    variant="outlined"
+                    sx={{ p: 2, width: { xs: "100%", sm: "20%" } }}
+                  >
+                    <Typography variant="caption">Actual</Typography>
+                    <Typography variant="body1">
+                      {milestone.actualDate
+                        ? new Date(milestone.actualDate).toLocaleDateString()
+                        : "-"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Box>
+            ))}
 
             <Box
               sx={{
@@ -475,23 +548,7 @@ const ProjectDetailsPage = () => {
                 py: 7,
               }}
             >
-              <ColourButton
-                startIcon={<EditIcon />}
-                onClick={handleEditOpen}
-                sx={{
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  background: "#212121",
-                  color: "#fff",
-                  px: 3,
-                  py: 1.2,
-                  boxShadow: 2,
-                  "&:hover": {
-                    background: "#333",
-                    color: "#fff",
-                  },
-                }}
-              >
+              <ColourButton startIcon={<EditIcon />} onClick={handleEditOpen}>
                 Edit
               </ColourButton>
 
@@ -600,4 +657,3 @@ const ProjectDetailsPage = () => {
 };
 
 export default ProjectDetailsPage;
-
